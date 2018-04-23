@@ -2,6 +2,7 @@ package epod.com.main.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -16,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,23 +27,43 @@ import android.widget.Toast;
 import com.github.florent37.rxgps.RxGps;
 import com.raizlabs.android.dbflow.sql.queriable.StringQuery;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
+import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 import epod.com.main.R;
 import epod.com.main.application.AppController;
+import epod.com.main.datamodel.DetailOrder.Detailorder;
+import epod.com.main.datamodel.DetailOrder.UpdateOrder;
 import epod.com.main.datamodel.ModelOrder.Dataorder;
+import epod.com.main.service.APIClient;
+import epod.com.main.service.APIInterfacesRest;
 import epod.com.main.utils.AppUtil;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static epod.com.main.application.AppController.MY_PERMISSIONS_REQUEST_CAMERA;
+import static epod.com.main.utils.AppUtil.NowX;
 
 public class DetailOrderActivity extends AppCompatActivity {
 
@@ -53,16 +75,21 @@ public class DetailOrderActivity extends AppCompatActivity {
     private int Gallary_REQUEST = 101;
 
     private Button btnImg1 , btnImg2, btnImg3;
+    private Button btnSubmit, btnCancel;
     private ImageView img1, img2, img3;
     private EditText orderno,shipto,shipname,txtlocation,recievedate,poddate;
 
     private String shipNo, orderNo;
+
+    public Detailorder datax;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_order);
 
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
 
         shipNo = getIntent().getStringExtra("shipno");
         orderNo = getIntent().getStringExtra("orderno");
@@ -76,7 +103,7 @@ public class DetailOrderActivity extends AppCompatActivity {
         poddate = (EditText)findViewById(R.id.poddate);
 
 
-        setGPS();
+
         setupData();
 
 
@@ -86,6 +113,23 @@ public class DetailOrderActivity extends AppCompatActivity {
         img3 = (ImageView)findViewById(R.id.img3);
 
         btnImg1 = (Button)findViewById(R.id.btnImg1);
+
+        btnSubmit = (Button)findViewById(R.id.submit);
+        btnCancel = (Button)findViewById(R.id.cancel);
+
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+
+                sendsave();
+
+            }
+        });
+
+
+
         btnImg1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -120,21 +164,37 @@ public class DetailOrderActivity extends AppCompatActivity {
         if (requestCode == CAMERA_REQUEST1 && resultCode == Activity.RESULT_OK) {
             bitmap = (Bitmap) data.getExtras().get("data");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             img1.setImageBitmap(bitmap);
+           String filepath =  storeImage(bitmap);
+           if (!filepath.equalsIgnoreCase("")){
+
+               datax.setImg1(filepath);
+               datax.save();
+           }
+
 
         } else if (requestCode == CAMERA_REQUEST2 && resultCode == Activity.RESULT_OK) {
             bitmap = (Bitmap) data.getExtras().get("data");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             img2.setImageBitmap(bitmap);
+            String filepath =  storeImage(bitmap);
+            if (!filepath.equalsIgnoreCase("")){
+                datax.setImg2(filepath);
+                datax.save();
+            }
 
         }else if (requestCode == CAMERA_REQUEST3 && resultCode == Activity.RESULT_OK) {
             bitmap = (Bitmap) data.getExtras().get("data");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             img3.setImageBitmap(bitmap);
-
+            String filepath =  storeImage(bitmap);
+            if (!filepath.equalsIgnoreCase("")){
+                datax.setImg3(filepath);
+                datax.save();
+            }
 
         } else if (requestCode == Gallary_REQUEST && resultCode == Activity.RESULT_OK) {
             Uri selectedImageUri = data.getData();
@@ -262,8 +322,73 @@ public class DetailOrderActivity extends AppCompatActivity {
 
     }
 
-
     public void setupData(){
+
+        String rawQuery = "SELECT  * FROM `Detailorder` where  driver ='"+AppController.username+"' and shipno ='"+shipNo+"' and orderno ='"+orderNo+"' order by shipno";
+        StringQuery<Detailorder> stringQuery = new StringQuery<>(Detailorder.class, rawQuery);
+        stringQuery
+                .async()
+                .error(new Transaction.Error() {
+                    @Override
+                    public void onError(@android.support.annotation.NonNull Transaction transaction, @android.support.annotation.NonNull Throwable error) {
+                        setupDataIfNull();
+                    }
+                })
+                .queryListResultCallback(new QueryTransaction.QueryResultListCallback<Detailorder>() {
+                                             @Override
+                                             public void onListQueryResult(QueryTransaction transaction, @NonNull List<Detailorder> models) {
+
+
+                                                if (models.size()>0){
+                                                    orderno.setText(models.get(0).getOrderno());
+                                                    shipto.setText(models.get(0).getShipto());
+                                                    shipname.setText(models.get(0).getShipname());
+                                                    if (models.get(0).getRecieveddate().equalsIgnoreCase("")){
+                                                        recievedate.setText(AppUtil.Now());
+                                                        models.get(0).setRecieveddate(recievedate.getText().toString());
+                                                    }else{
+                                                        recievedate.setText( models.get(0).getRecieveddate());
+                                                    }
+
+                                                    if (models.get(0).getPoddate().equalsIgnoreCase("")){
+                                                        poddate.setText(AppUtil.Now());
+                                                        models.get(0).setPoddate(poddate.getText().toString());
+                                                    }else{
+                                                        poddate.setText( models.get(0).getPoddate());
+                                                    }
+
+                                                    if (models.get(0).getImg1()!=null){
+                                                        Picasso.get().load(new File(models.get(0).getImg1())).into(img1);
+                                                    }
+
+                                                    if (models.get(0).getImg2()!=null){
+                                                        Picasso.get().load(new File(models.get(0).getImg2())).into(img2);
+                                                    }
+
+                                                    if (models.get(0).getImg3()!=null){
+                                                        Picasso.get().load(new File(models.get(0).getImg3())).into(img3);
+                                                    }
+
+                                                    datax = models.get(0);
+                                                    datax.save();
+                                                    setGPS();
+
+                                                }else{
+                                                    setupDataIfNull();
+                                                }
+
+                                             }
+
+
+                                         }
+
+
+                )
+                .execute();
+
+    }
+
+    public void setupDataIfNull(){
         String rawQuery = "SELECT  * FROM `Dataorder` where driver ='"+ AppController.username+"' and shipmentNo ='"+shipNo+"' and orderNo ='"+orderNo+"' order by shipmentNo;";
         StringQuery<Dataorder> stringQuery = new StringQuery<>(Dataorder.class, rawQuery);
         stringQuery
@@ -279,6 +404,18 @@ public class DetailOrderActivity extends AppCompatActivity {
 
                                                  recievedate.setText(AppUtil.Now());
                                                  poddate.setText(AppUtil.Now());
+
+                                                 datax = new Detailorder();
+                                                 datax.setId(models.get(0).getId());
+                                                 datax.setOrderno(models.get(0).getOrderNo());
+                                                 datax.setShipto(models.get(0).getShipTo());
+                                                 datax.setShipname(models.get(0).getShipName());
+                                                 datax.setRecieveddate(recievedate.getText().toString());
+                                                 datax.setPoddate(poddate.getText().toString());
+                                                 datax.setShipno(models.get(0).getShipmentNo());
+                                                 datax.setDriver(AppController.username);
+                                                 datax.save();
+                                                 setGPS();
 
 
 
@@ -308,6 +445,7 @@ public class DetailOrderActivity extends AppCompatActivity {
 
                     String latlon = String.valueOf(location.getLongitude()) + String.valueOf(location.getLatitude());
                     txtlocation.setText(latlon);
+                    datax.setLocation(txtlocation.getText().toString());
 
                 }, throwable -> {
                     if (throwable instanceof RxGps.PermissionException) {
@@ -322,5 +460,173 @@ public class DetailOrderActivity extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
+
+    String TAG ="Save File Image";
+
+    private String storeImage(Bitmap image) {
+        File pictureFile = getOutputMediaFile();
+        if (pictureFile == null) {
+            Log.d(TAG,
+                    "Error creating media file, check storage permissions: ");// e.getMessage());
+            return "";
+        }
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            image.compress(Bitmap.CompressFormat.PNG, 90, fos);
+            fos.close();
+            return getOutputMediaFile().getAbsolutePath();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+            return "";
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+            return "";
+        }
+    }
+
+    /** Create a File for saving an image or video */
+    private  File getOutputMediaFile(){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + getApplicationContext().getPackageName()
+                + "/Files");
+
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                return null;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+        File mediaFile;
+        String mImageName="MI_"+ timeStamp +".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
+    }
+
+
+    public Bitmap getBitmap  (File file){
+
+        Bitmap bitmap = null;
+
+        FileInputStream streamIn = null;
+        try {
+            streamIn = new FileInputStream(file);
+
+
+            bitmap = BitmapFactory.decodeStream(streamIn); //This gets the image
+
+            streamIn.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+       return bitmap;
+    }
+
+    ProgressDialog progressDialog;
+
+    public void sendsave(){
+
+
+        byte[] bImg1  = AppUtil.FiletoByteArray(new File(datax.getImg1()));
+        byte[] bImg2  = AppUtil.FiletoByteArray(new File(datax.getImg2()));
+        byte[] bImg3  = AppUtil.FiletoByteArray(new File(datax.getImg3()));
+
+
+        APIInterfacesRest apiInterface = APIClient.getClient().create(APIInterfacesRest.class);
+        //  RequestBody requestFile = RequestBody.create(MediaType.parse("image/jpeg"), byteArray);
+
+        RequestBody requestFile1 = RequestBody.create(MediaType.parse("image/jpeg"),bImg1);
+        MultipartBody.Part bodyImg1 =
+                MultipartBody.Part.createFormData("img1", datax.getOrderno()+NowX()+".jpg", requestFile1);
+
+        RequestBody requestFile2 = RequestBody.create(MediaType.parse("image/jpeg"),bImg2);
+        MultipartBody.Part bodyImg2 =
+                MultipartBody.Part.createFormData("img2", datax.getOrderno()+NowX()+".jpg", requestFile2);
+
+        RequestBody requestFile3 = RequestBody.create(MediaType.parse("image/jpeg"),bImg3);
+        MultipartBody.Part bodyImg3 =
+                MultipartBody.Part.createFormData("img3", datax.getOrderno()+NowX()+".jpg", requestFile3);
+
+
+
+        progressDialog = new ProgressDialog(DetailOrderActivity.this);
+        progressDialog.setTitle("Loading");
+        progressDialog.show();
+        Call<UpdateOrder> updateService = apiInterface.updateData(
+                toRequestBody(AppUtil.replaceNull(datax.getOrderno()).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getShipto() ).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getShipname() ).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getLocation() ).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getRecieveddate()).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getPoddate() ).trim()),
+                bodyImg1,bodyImg2,bodyImg3,
+                toRequestBody(AppUtil.replaceNull(datax.getStatus() ).trim()),
+                toRequestBody(AppUtil.replaceNull(datax.getVerification() ).trim())
+
+
+
+        );
+        updateService.enqueue(new Callback<UpdateOrder>() {
+            @Override
+            public void onResponse(Call<UpdateOrder> call, Response<UpdateOrder> response) {
+                progressDialog.dismiss();
+                if (response != null) {
+                    if(response.isSuccessful()) {
+                        if (response.body() != null) {
+                            Log.d("Test", response.message());
+
+                            Toast.makeText(getApplicationContext(), response.message(), Toast.LENGTH_LONG).show();
+
+                            datax.setStatus("send");
+                            finish();
+
+
+                        }
+                    }
+                }else{
+
+                    datax.setStatus("pending");
+                    datax.save();
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        Toast.makeText(getApplicationContext(), jObjError.getString("message"), Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                finish();
+
+            }
+
+            @Override
+            public void onFailure(Call<UpdateOrder> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Koneksi bermasalah", Toast.LENGTH_LONG).show();
+
+                progressDialog.dismiss();
+                datax.setStatus("pending");
+                finish();
+            }
+        });
+
+
+    }
+
+
+    public RequestBody toRequestBody(String value) {
+        if (value==null){
+            value="";
+        }
+        RequestBody body = RequestBody.create(MediaType.parse("text/plain"), value);
+        return body;
+    }
 
 }

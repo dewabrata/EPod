@@ -14,7 +14,7 @@ import java.util.List;
 import epod.com.main.R;
 import epod.com.main.datamodel.ModelOrder.Dataorder;
 
-public class AdapterListBasicShipTo extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdapterListBasicOrder extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<Dataorder> items = new ArrayList<>();
 
@@ -29,7 +29,7 @@ public class AdapterListBasicShipTo extends RecyclerView.Adapter<RecyclerView.Vi
         this.mOnItemClickListener = mItemClickListener;
     }
 
-    public AdapterListBasicShipTo(Context context, List<Dataorder> items) {
+    public AdapterListBasicOrder(Context context, List<Dataorder> items) {
         this.items = items;
         ctx = context;
     }
@@ -64,7 +64,7 @@ public class AdapterListBasicShipTo extends RecyclerView.Adapter<RecyclerView.Vi
             OriginalViewHolder view = (OriginalViewHolder) holder;
 
             Dataorder p = items.get(position);
-            view.name.setText(p.getShipTo());
+            view.name.setText(p.getOrderNo());
             view.description.setText(p.getShipName());
            // Tools.displayImageRound(ctx, view.image, p.image);
             view.image.setImageResource(R.drawable.img_social_instagram);

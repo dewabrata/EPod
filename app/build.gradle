@@ -48,6 +48,8 @@ dependencies {
 // explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex.rxjava2:rxjava:2.1.8'
 
+
+    compile 'com.google.android.gms:play-services:11.8.0'
     // google support library ---------------------------------------------------------------------
     compile 'com.android.support:appcompat-v7:27.0.2'
     compile 'com.android.support:design:27.0.2'
@@ -76,6 +78,8 @@ dependencies {
     compile 'com.google.android:flexbox:0.3.2'
     // google flexible box
     compile 'com.android.support:multidex:1.0.0'
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
 }
 
 def dbflow_version = "4.0.3"

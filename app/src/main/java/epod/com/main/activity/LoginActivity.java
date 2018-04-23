@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
                     sharedPreferencesUtil.setUsername(username);
                     AppController.setUsername(username);
 
-                     startActivity(new Intent(LoginActivity.this, DeliveryDocActivity.class));
+                     startActivity(new Intent(LoginActivity.this, SearchDocument.class));
                 }else{
 
                     try {

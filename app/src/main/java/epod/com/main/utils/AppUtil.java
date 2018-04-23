@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -262,4 +264,26 @@ public class AppUtil {
         }
         return input;
     }
+
+
+    public static byte [] FiletoByteArray  (File file){
+
+
+        //init array with file length
+        byte[] bytesArray = new byte[(int) file.length()];
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            fis.read(bytesArray); //read file into bytes[]
+            fis.close();
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return bytesArray;
+
+    }
+
 }

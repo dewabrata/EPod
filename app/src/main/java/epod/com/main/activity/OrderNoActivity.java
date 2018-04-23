@@ -11,38 +11,26 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.queriable.StringQuery;
-import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
-import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
-import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
 
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import epod.com.main.R;
-import epod.com.main.adapter.AdapterListBasicDelDoc;
+import epod.com.main.adapter.AdapterListBasicOrder;
 import epod.com.main.adapter.AdapterListBasicShipTo;
 import epod.com.main.application.AppController;
 import epod.com.main.datamodel.ModelOrder.Dataorder;
-import epod.com.main.datamodel.ModelOrder.ModelOrder;
-import epod.com.main.service.APIClient;
-import epod.com.main.service.APIInterfacesRest;
 import io.reactivex.annotations.NonNull;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
-public class ShipToActivity extends AppCompatActivity {
+public class OrderNoActivity extends AppCompatActivity {
 
     private View parent_view;
 
     private RecyclerView recyclerView;
-    private AdapterListBasicShipTo mAdapter;
+    private AdapterListBasicOrder mAdapter;
     private String shipmentNo;
+    private String shipTo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +41,9 @@ public class ShipToActivity extends AppCompatActivity {
         initToolbar();
         initComponent();
 
-        shipmentNo = getIntent().getStringExtra("shipmentno");
-
-        if (shipmentNo!=null){
+        shipmentNo = getIntent().getStringExtra("shipno");
+        shipTo = getIntent().getStringExtra("shipto");
+        if (shipmentNo!=null && shipTo!=null){
             sqlQueryList();
         }
 
@@ -66,7 +54,7 @@ public class ShipToActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_menu);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Ship To Customer");
+        getSupportActionBar().setTitle("Order Number");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
@@ -105,7 +93,7 @@ public class ShipToActivity extends AppCompatActivity {
 
     public void sqlQueryList(){
 
-        String rawQuery = "SELECT distinct * FROM `Dataorder` where driver ='"+AppController.username+"' and shipmentNo ='"+shipmentNo+"'  group by shipTo;";
+        String rawQuery = "SELECT distinct * FROM `Dataorder` where driver ='"+AppController.username+"' and shipmentNo ='"+shipmentNo+"' and shipTo ='"+shipTo+"' group by orderno;";
         StringQuery<Dataorder> stringQuery = new StringQuery<>(Dataorder.class, rawQuery);
         stringQuery
                 .async()
@@ -136,19 +124,18 @@ public class ShipToActivity extends AppCompatActivity {
     public void setupAdapterList(List<Dataorder>items){
 
 
-             mAdapter = new AdapterListBasicShipTo(this, items);
+             mAdapter = new AdapterListBasicOrder(this, items);
              recyclerView.setAdapter(mAdapter);
 
         // on item list clicked
-        mAdapter.setOnItemClickListener(new AdapterListBasicShipTo.OnItemClickListener() {
+        mAdapter.setOnItemClickListener(new AdapterListBasicOrder.OnItemClickListener() {
             @Override
             public void onItemClick(View view, Dataorder obj, int position) {
 
 
-                Intent intent = new Intent(getApplicationContext(),OrderNoActivity.class);
+                Intent intent = new Intent(getApplicationContext(),DetailOrderActivity.class);
                 intent.putExtra("shipno",obj.getShipmentNo());
-             //   intent.putExtra("orderno",obj.getOrderNo());
-                intent.putExtra("shipto",obj.getShipTo());
+                intent.putExtra("orderno",obj.getOrderNo());
                 startActivityForResult(intent,999);
 
             }
