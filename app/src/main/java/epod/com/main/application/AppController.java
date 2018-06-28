@@ -21,8 +21,8 @@ import java.util.List;
 
 public class AppController extends Application {
 
-    public static final String NAME = "EPOD";
-    public static final int VERSION = 1;
+    public static final String NAME = "EPODX";
+    public static final int VERSION = 3;
 
     public static final String TAG = AppController.class.getSimpleName();
 

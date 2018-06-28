@@ -7,8 +7,10 @@ package epod.com.main.service;
 
 
 import epod.com.main.datamodel.DetailOrder.UpdateOrder;
+import epod.com.main.datamodel.MobileUser.MobileUser;
 import epod.com.main.datamodel.ModelLogin.Authentication;
-import epod.com.main.datamodel.ModelOrder.ModelOrder;
+
+import epod.com.main.datamodel.NewOrder.ModelOrder;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -33,30 +35,45 @@ import retrofit2.http.Query;
 
 
     @GET("api/dataorder/all")
-    Call<ModelOrder> getOrder( @Query("username") String user);
+    Call<ModelOrder> getOrder(@Query("username") String user);
+
+   @GET("api/user_mobile/all")
+   Call<MobileUser> getUser(@Query("username") String user);
+
+/*
+            @Part MultipartBody.Part img1,
+           @Part MultipartBody.Part img2,
+           @Part MultipartBody.Part img3,
+ */
+   @Multipart
+   @POST("api/dataorder/update")
+   Call<UpdateOrder> updateData(
+
+                   @Part("pod_date") RequestBody podate,
+                   @Part("status") RequestBody status,
+                   @Part("lat") RequestBody lat,
+                   @Part("lon") RequestBody lon,
+                   @Part("poddate") RequestBody poddate,
+                   @Part("recievedate") RequestBody recievedate,
+                   @Part("id") RequestBody id
+
+
+
+           );
 
 
    @Multipart
-   @POST("api/detailorder/add")
-   Call<UpdateOrder> updateData(
+   @POST("api/orderimage/add")
+   Call<UpdateOrder> sendImage(
 
            @Part("orderno") RequestBody orderno,
-           @Part("shipto") RequestBody shipto,
-           @Part("shipname") RequestBody shipname,
-           @Part("location") RequestBody location,
-           @Part("recieveddate") RequestBody recieveddate,
-           @Part("poddate") RequestBody poddate,
-
-
+           @Part("shipno") RequestBody shipno,
+           @Part("username") RequestBody username,
            @Part MultipartBody.Part img1,
-           @Part MultipartBody.Part img2,
-           @Part MultipartBody.Part img3,
+           @Part("waktu") RequestBody time,
+           @Part("id_ref") RequestBody idref
 
-           @Part("status") RequestBody status,
-           @Part("verification") RequestBody verification
    );
-
-
 
 }
 

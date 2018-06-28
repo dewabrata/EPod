@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import epod.com.main.R;
-import epod.com.main.datamodel.ModelOrder.Dataorder;
+
+import epod.com.main.datamodel.NewOrder.Dataorder;
 
 public class AdapterListBasicOrder extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 

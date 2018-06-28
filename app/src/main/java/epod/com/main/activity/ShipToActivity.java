@@ -11,30 +11,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.queriable.StringQuery;
-import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
-import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
-import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
 
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import epod.com.main.R;
-import epod.com.main.adapter.AdapterListBasicDelDoc;
 import epod.com.main.adapter.AdapterListBasicShipTo;
 import epod.com.main.application.AppController;
-import epod.com.main.datamodel.ModelOrder.Dataorder;
-import epod.com.main.datamodel.ModelOrder.ModelOrder;
-import epod.com.main.service.APIClient;
-import epod.com.main.service.APIInterfacesRest;
+
+import epod.com.main.datamodel.NewOrder.Dataorder;
 import io.reactivex.annotations.NonNull;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ShipToActivity extends AppCompatActivity {
 

@@ -1,22 +1,16 @@
 package epod.com.main.activity;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MenuItem;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -26,10 +20,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.vision.CameraSource;
-import com.google.android.gms.vision.Detector;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.queriable.StringQuery;
 import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
@@ -39,15 +29,14 @@ import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import epod.com.main.R;
-import epod.com.main.adapter.AdapterListBasicDelDoc;
 import epod.com.main.application.AppController;
-import epod.com.main.datamodel.ModelOrder.Dataorder;
-import epod.com.main.datamodel.ModelOrder.ModelOrder;
+
+import epod.com.main.datamodel.NewOrder.Dataorder;
+import epod.com.main.datamodel.NewOrder.ModelOrder;
 import epod.com.main.service.APIClient;
 import epod.com.main.service.APIInterfacesRest;
 import io.reactivex.annotations.NonNull;
@@ -59,7 +48,7 @@ import retrofit2.Response;
 public class SearchDocument extends AppCompatActivity {
 
     private ProgressBar progress_bar;
-    private FloatingActionButton fab;
+    private FloatingActionButton fab,fab2;
     private EditText et_search;
     private String shipNo, orderNo;
 
@@ -69,6 +58,7 @@ public class SearchDocument extends AppCompatActivity {
         setContentView(R.layout.activity_search_primary_bg);
         initToolbar();
         initComponent();
+
         shipNo = getIntent().getStringExtra("shipno");
         orderNo = getIntent().getStringExtra("orderno");
 
@@ -76,68 +66,33 @@ public class SearchDocument extends AppCompatActivity {
 
         final SurfaceView cameraView = (SurfaceView) findViewById(R.id.camera_view);
 
-        BarcodeDetector barcodeDetector =
-                new BarcodeDetector.Builder(this)
-                        .setBarcodeFormats(Barcode.QR_CODE)
-                        .build();
+        TextView txtHelo = (TextView)findViewById(R.id.txtUsername);
+        txtHelo.setText("User : "+AppController.getUsername());
 
-        final CameraSource cameraSource = new CameraSource
-                .Builder(this, barcodeDetector)
-                .setRequestedPreviewSize(640, 480)
-                .build();
-        cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                try {
-                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        return;
-                    }
-                    cameraSource.start(cameraView.getHolder());
 
-                } catch (IOException ie) {
-                    Log.e("CAMERA SOURCE", ie.getMessage());
-                }
-            }
 
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            }
 
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                cameraSource.stop();
-            }
 
-        });
-        barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
-            @Override
-            public void release() {
-            }
-
-            @Override
-            public void receiveDetections(Detector.Detections<Barcode> detections) {
-                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-
-                if (barcodes.size() != 0) {
-                    et_search.post(new Runnable() {    // Use the post method of the TextView
-                        public void run() {
-                            et_search.setText(    // Update the TextView
-                                    barcodes.valueAt(0).displayValue
-                            );
-                        }
-                    });
-                }
-            }
-        });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == 111 && resultCode==222 ){
+            if (data!=null){
+
+                et_search.post(new Runnable() {    // Use the post method of the TextView
+                    public void run() {
+                        et_search.setText(    // Update the TextView
+                               data.getStringExtra("barcode")
+                        );
+
+                    }
+                });
+
+            }
+        }
+    }
 
     private void initToolbar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -152,7 +107,7 @@ public class SearchDocument extends AppCompatActivity {
         progress_bar = (ProgressBar) findViewById(R.id.progress_bar);
         progress_bar.getIndeterminateDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN );
         fab = (FloatingActionButton) findViewById(R.id.fab);
-
+        fab2 = (FloatingActionButton) findViewById(R.id.fab2);
         et_search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -168,6 +123,13 @@ public class SearchDocument extends AppCompatActivity {
             @Override
             public void onClick(final View v) {
                 searchAction();
+            }
+        });
+        fab2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                Intent intent = new Intent(SearchDocument.this, QRActivity.class);
+                startActivityForResult(intent,111);
             }
         });
 
@@ -232,6 +194,7 @@ public class SearchDocument extends AppCompatActivity {
                     if (response.body()!=null) {
                         //  Toast.makeText(LoginActivity.this,userList.getToken().toString(),Toast.LENGTH_LONG).show();
                         orderItems = (ArrayList<Dataorder>) order.getData().getDataorder();
+
 
                         savedb();
 
@@ -340,7 +303,6 @@ public class SearchDocument extends AppCompatActivity {
         setupAdapterList(data);
 */
     }
-
 
 
 

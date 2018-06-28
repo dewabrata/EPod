@@ -1,7 +1,6 @@
 package epod.com.main.activity;
 
 import android.content.Intent;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,7 +12,6 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.sql.queriable.StringQuery;
 import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
@@ -29,9 +27,10 @@ import java.util.List;
 import epod.com.main.R;
 import epod.com.main.adapter.AdapterListBasicDelDoc;
 import epod.com.main.application.AppController;
-import epod.com.main.datamodel.ModelOrder.Dataorder;
 
-import epod.com.main.datamodel.ModelOrder.ModelOrder;
+
+import epod.com.main.datamodel.NewOrder.Dataorder;
+import epod.com.main.datamodel.NewOrder.ModelOrder;
 import epod.com.main.service.APIClient;
 import epod.com.main.service.APIInterfacesRest;
 import io.reactivex.annotations.NonNull;

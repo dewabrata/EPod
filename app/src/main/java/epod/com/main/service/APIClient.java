@@ -18,9 +18,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class APIClient {
 //local
-    public static String BASE_URL ="http://192.168.43.171/epod/";
+public static String BASE_URL ="http://192.168.43.171/epod/";
     //remote
-//    public static String BASE_URL ="http://devpod.odyssey-id.com/cms/";
+  // public static String BASE_URL ="http://devpod.odyssey-id.com/cms2/";
     public static String API_KEY ="59D3CFCA29DB8697C4962A36EEB653C8";
     private static Retrofit retrofit = null;
 

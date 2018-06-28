@@ -19,12 +19,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-feature android:name="android.hardware.camera" />
 
     <uses-permission android:name="android.permission.CAMERA" />
-
-
 
     <uses-feature
         android:name="android.hardware.camera.any"
@@ -45,7 +44,6 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
         <meta-data
             android:name="com.google.android.gms.vision.DEPENDENCIES"
             android:value="barcode,face" />
@@ -60,15 +58,12 @@
         <activity android:name=".activity.DeliveryDocActivity" />
         <activity android:name=".activity.ShipToActivity" />
         <activity android:name=".activity.OrderNoActivity" />
-        <activity android:name=".activity.DetailOrderActivity"></activity>
-        <activity android:name=".activity.SearchDocument"></activity>
-
+        <activity android:name=".activity.DetailOrderActivity" />
+        <activity android:name=".activity.SearchDocument" />
         <activity
             android:name=".MultipleImage.MainActivity"
-            android:label="@string/app_name" >
-
-        </activity>
-        <activity android:name=".MultipleImage.CustomGalleryActivity" >
+            android:label="@string/app_name"></activity>
+        <activity android:name=".MultipleImage.CustomGalleryActivity">
             <intent-filter>
                 <action android:name="luminous.ACTION_PICK" />
                 <action android:name="luminous.ACTION_MULTIPLE_PICK" />
@@ -76,8 +71,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".MultipleImageTwo.MultipleImageTwo">
 
-
+        </activity>
+        <activity android:name=".activity.QRActivity"></activity>
     </application>
 
 </manifest>

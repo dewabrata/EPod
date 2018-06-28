@@ -18,9 +18,9 @@ import java.util.List;
 
 import epod.com.main.R;
 import epod.com.main.adapter.AdapterListBasicOrder;
-import epod.com.main.adapter.AdapterListBasicShipTo;
 import epod.com.main.application.AppController;
-import epod.com.main.datamodel.ModelOrder.Dataorder;
+
+import epod.com.main.datamodel.NewOrder.Dataorder;
 import io.reactivex.annotations.NonNull;
 
 public class OrderNoActivity extends AppCompatActivity {
@@ -93,7 +93,7 @@ public class OrderNoActivity extends AppCompatActivity {
 
     public void sqlQueryList(){
 
-        String rawQuery = "SELECT distinct * FROM `Dataorder` where driver ='"+AppController.username+"' and shipmentNo ='"+shipmentNo+"' and shipTo ='"+shipTo+"' group by orderno;";
+        String rawQuery = "SELECT distinct * FROM `Dataorder` where driver ='"+AppController.username+"' and shipmentNo ='"+shipmentNo+"' and shipTo ='"+shipTo+"' and status not in ('1') group by orderno;";
         StringQuery<Dataorder> stringQuery = new StringQuery<>(Dataorder.class, rawQuery);
         stringQuery
                 .async()
@@ -145,5 +145,12 @@ public class OrderNoActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        if (requestCode == 999){
+            sqlQueryList();
+        }
+
+    }
 }

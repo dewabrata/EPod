@@ -26,15 +26,11 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import epod.com.main.R;
 import epod.com.main.application.AppController;
-import epod.com.main.datamodel.ModelLogin.Authentication;
+import epod.com.main.datamodel.MobileUser.MobileUser;
+
 import epod.com.main.service.APIClient;
 import epod.com.main.service.APIInterfacesRest;
 import epod.com.main.utils.AppUtil;
@@ -58,14 +54,16 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         sharedPreferencesUtil = new SharedPreferencesUtil(this);
+        Camerapermission();
 
         mInputUsername = (TextInputEditText) findViewById(R.id.username);
         mInputPassword = (TextInputEditText) findViewById(R.id.password);
 
         //debug
 
-        mInputUsername.setText("IWAN");
-        mInputPassword.setText("123456");
+        //mInputUsername.setText("IWAN");
+        //mInputPassword.setText("123456");
+
 
 
 
@@ -112,18 +110,34 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(LoginActivity.this);
         progressDialog.setTitle("Loading");
         progressDialog.show();
-        Call<Authentication> call3 = apiInterface.getAuthentication(username,password);
-        call3.enqueue(new Callback<Authentication>() {
+        Call<MobileUser> call3 = apiInterface.getUser(username);
+        call3.enqueue(new Callback<MobileUser>() {
             @Override
-            public void onResponse(Call<Authentication> call, Response<Authentication> response) {
+            public void onResponse(Call<MobileUser> call, Response<MobileUser> response) {
                 progressDialog.dismiss();
-                Authentication userList = response.body();
+                MobileUser userList = response.body();
                 //Toast.makeText(LoginActivity.this,userList.getToken().toString(),Toast.LENGTH_LONG).show();
                 if (userList !=null) {
-                    sharedPreferencesUtil.setUsername(username);
-                    AppController.setUsername(username);
 
-                     startActivity(new Intent(LoginActivity.this, SearchDocument.class));
+                    if ( userList.getData().getUserMobile().size()>0) {
+                        String myUsername = userList.getData().getUserMobile().get(0).getUsername();
+                        String myPass = userList.getData().getUserMobile().get(0).getPassword();
+                        String myActive = userList.getData().getUserMobile().get(0).getIsactive();
+
+                        if ((username.equalsIgnoreCase(username.toString().trim()) && (password.equalsIgnoreCase(password.toString().trim())))) {
+
+
+                            sharedPreferencesUtil.setUsername(username);
+                            AppController.setUsername(username);
+
+                            startActivity(new Intent(LoginActivity.this, SearchDocument.class));
+                        } else {
+
+                            Toast.makeText(LoginActivity.this, "Username and Password doesnt match!", Toast.LENGTH_LONG).show();
+                        }
+                    }else{
+                        Toast.makeText(LoginActivity.this, "Username not found!", Toast.LENGTH_LONG).show();
+                    }
                 }else{
 
                     try {
@@ -137,7 +151,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<Authentication> call, Throwable t) {
+            public void onFailure(Call<MobileUser> call, Throwable t) {
                 progressDialog.dismiss();
                 Toast.makeText(getApplicationContext(),"Maaf koneksi bermasalah",Toast.LENGTH_LONG).show();
                 call.cancel();
@@ -150,5 +164,59 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
+    private void Camerapermission() {
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(LoginActivity.this
+                ,
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(LoginActivity.this,
+                    Manifest.permission.CAMERA)) {
+
+                // Show an expanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(LoginActivity.this,
+                        new String[]{Manifest.permission.CAMERA},
+                        MY_PERMISSIONS_REQUEST_CAMERA);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_CAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
 
 }
